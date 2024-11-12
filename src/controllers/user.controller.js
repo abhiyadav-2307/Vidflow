@@ -34,6 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
   const { fullname, email, username, password } = req.body;
   console.log("email: ", email);
 
+  console.log(req.files);
+
   //validation of input data - not empty and all that
   if (
     [fullname, email, username, password].some((field) => field?.trim() === "")
@@ -109,6 +111,8 @@ const loginUser = asyncHandler(async (req, res) => {
   // Get data from req.body
   const { email, username, password } = req.body;
 
+  
+  console.log("email: ",email, "username: ",username);
   // Check if either username or email is provided
   if (!username && !email) {
     throw new ApiError(400, "Username or email is required");
@@ -117,7 +121,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // Find the user based on username or email
   const user = await User.findOne({
     $or: [{ email }, { username }],
-  }).select("-password -refreshToken");
+  }).select("-refreshToken");
 
   // Check if user exists
   if (!user) {
@@ -136,7 +140,8 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new ApiError(401, "Password is incorrect");
   }
-
+ const userResponse = user.toObject();
+ delete userResponse.password;
   //generate access and refresh token
   const { accessToken, refresToken } = await generateAccessAndRefreshTokens(
     user._id
@@ -155,7 +160,7 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(
         200,
         {
-          user,
+          userResponse,
           accessToken,
           refresToken,
         },
